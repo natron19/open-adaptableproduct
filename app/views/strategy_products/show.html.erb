@@ -1,0 +1,99 @@
+<div class="d-flex justify-content-between align-items-start mb-4">
+  <h1 class="h3 mb-0"><%= @strategy_product.name %></h1>
+  <div class="d-flex gap-2">
+    <%= link_to "Edit", edit_strategy_product_path(@strategy_product), class: "btn btn-outline-secondary btn-sm" %>
+    <%= button_to "Delete", strategy_product_path(@strategy_product),
+          method: :delete,
+          data: { turbo_confirm: "Delete #{@strategy_product.name} and all its matrices?" },
+          class: "btn btn-outline-danger btn-sm" %>
+  </div>
+</div>
+
+<%# ── Input summary card ──────────────────────────────────────────────────── %>
+<div class="card mb-4">
+  <div class="card-body">
+    <dl class="row mb-0 small">
+      <dt class="col-sm-3 text-muted">Target customer</dt>
+      <dd class="col-sm-9"><%= @strategy_product.target_customer %></dd>
+      <dt class="col-sm-3 text-muted">Strategy</dt>
+      <dd class="col-sm-9"><%= @strategy_product.strategy %></dd>
+      <dt class="col-sm-3 text-muted">Primary goal</dt>
+      <dd class="col-sm-9 mb-0"><%= @strategy_product.primary_goal %></dd>
+    </dl>
+  </div>
+</div>
+
+<% matrix = @strategy_product.latest_matrix %>
+
+<% if matrix.nil? %>
+  <%# ── Empty state ─────────────────────────────────────────────────────────── %>
+  <div class="text-center py-5">
+    <%= button_to "Surface Assumptions",
+          strategy_product_assumption_matrices_path(@strategy_product),
+          method: :post,
+          class: "btn btn-primary btn-lg" %>
+    <p class="text-muted small mt-3">
+      These are starting hypotheses, not facts. The point is to disagree with them.
+    </p>
+    <p class="text-muted small" style="max-width: 500px; margin: 0 auto;">
+      The model calibrates from your strategy text. The narrower and more specific the
+      strategy, the sharper the assumptions. Typically takes 4&ndash;10 seconds.
+    </p>
+  </div>
+
+<% else %>
+  <%# ── Stale banner ───────────────────────────────────────────────────────── %>
+  <% if matrix.generated_at && @strategy_product.updated_at > matrix.generated_at %>
+    <div class="alert alert-warning py-2 d-flex align-items-center gap-3 mb-3">
+      <span>Your strategy has changed since this matrix was generated.</span>
+      <%= button_to "Regenerate",
+            strategy_product_assumption_matrices_path(@strategy_product),
+            method: :post,
+            class: "btn btn-outline-warning btn-sm" %>
+    </div>
+  <% end %>
+
+  <%# ── Matrix header ──────────────────────────────────────────────────────── %>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="h5 mb-0">
+      Assumption Matrix
+      <% if matrix.generated_at %>
+        <span class="text-muted fw-normal small">&mdash; generated <%= time_ago_in_words(matrix.generated_at) %> ago</span>
+      <% end %>
+    </h2>
+    <div class="d-flex gap-2">
+      <%= button_to "Regenerate",
+            strategy_product_assumption_matrices_path(@strategy_product),
+            method: :post,
+            class: "btn btn-outline-secondary btn-sm" %>
+      <button class="btn btn-outline-secondary btn-sm"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#raw-response">
+        Show raw response
+      </button>
+    </div>
+  </div>
+
+  <%# ── AI disclaimer ──────────────────────────────────────────────────────── %>
+  <p class="text-muted small mb-3">
+    <strong>AI-generated.</strong> Re-rate Your Confidence on each row. Disagreement is the data.
+  </p>
+
+  <% if matrix.status == "failed" %>
+    <%= render "assumption_matrices/matrix_parse_error",
+          strategy_product: @strategy_product, matrix: matrix %>
+  <% elsif matrix.status == "completed" %>
+    <%= render "assumption_matrices/matrix_table",
+          assumptions: matrix.assumptions.order(:position) %>
+  <% else %>
+    <p class="text-muted fst-italic">This matrix is still generating&hellip;</p>
+  <% end %>
+
+  <%# ── Raw response collapse ──────────────────────────────────────────────── %>
+  <div class="collapse mt-3" id="raw-response">
+    <div class="card card-body">
+      <pre class="small mb-0 text-muted"><%= matrix.gemini_raw %></pre>
+    </div>
+  </div>
+<% end %>

@@ -1,0 +1,62 @@
+<div style="max-width: 720px;">
+  <%= form_with model: strategy_product,
+        data: { controller: "form-submit", action: "submit->form-submit#disable" } do |f| %>
+
+    <% if strategy_product.errors.any? %>
+      <div class="alert alert-danger">
+        <ul class="mb-0">
+          <% strategy_product.errors.full_messages.each do |msg| %>
+            <li><%= msg %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div class="form-floating mb-3">
+      <%= f.text_field :name,
+            class: "form-control #{'is-invalid' if strategy_product.errors[:name].any?}",
+            placeholder: "Product name" %>
+      <%= f.label :name, "Product name" %>
+      <div class="form-text">What you call this product internally or externally</div>
+      <% if strategy_product.errors[:name].any? %>
+        <div class="invalid-feedback"><%= strategy_product.errors[:name].first %></div>
+      <% end %>
+    </div>
+
+    <div class="form-floating mb-3">
+      <%= f.text_field :target_customer,
+            class: "form-control #{'is-invalid' if strategy_product.errors[:target_customer].any?}",
+            placeholder: "Target customer" %>
+      <%= f.label :target_customer, "Target customer" %>
+      <div class="form-text">One specific buyer or user. Be narrow; you can broaden later.</div>
+      <% if strategy_product.errors[:target_customer].any? %>
+        <div class="invalid-feedback"><%= strategy_product.errors[:target_customer].first %></div>
+      <% end %>
+    </div>
+
+    <div class="mb-3">
+      <%= f.label :strategy, "Current strategy", class: "form-label" %>
+      <%= f.text_area :strategy, rows: 5,
+            class: "form-control #{'is-invalid' if strategy_product.errors[:strategy].any?}",
+            placeholder: "How you are trying to win, in one paragraph. What is the bet?" %>
+      <div class="form-text">How you are trying to win, in one paragraph. What is the bet?</div>
+      <% if strategy_product.errors[:strategy].any? %>
+        <div class="invalid-feedback"><%= strategy_product.errors[:strategy].first %></div>
+      <% end %>
+    </div>
+
+    <div class="mb-4">
+      <%= f.label :primary_goal, "Primary goal", class: "form-label" %>
+      <%= f.text_area :primary_goal, rows: 3,
+            class: "form-control #{'is-invalid' if strategy_product.errors[:primary_goal].any?}",
+            placeholder: "The most important outcome this strategy is meant to produce" %>
+      <div class="form-text">The most important outcome this strategy is meant to produce in the next quarter or two</div>
+      <% if strategy_product.errors[:primary_goal].any? %>
+        <div class="invalid-feedback"><%= strategy_product.errors[:primary_goal].first %></div>
+      <% end %>
+    </div>
+
+    <%= f.submit class: "btn btn-primary",
+          data: { form_submit_target: "button" } %>
+  <% end %>
+</div>

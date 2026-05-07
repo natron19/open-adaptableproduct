@@ -1,0 +1,18 @@
+<%= turbo_frame_tag "assumption_#{assumption.id}_confidence" do %>
+  <%= form_with url: assumption_path(assumption), method: :patch,
+        data: { controller: "confidence-rating" } do |f| %>
+    <%= f.hidden_field :confidence_user,
+          value: assumption.confidence_user || 0,
+          data: { confidence_rating_target: "input" } %>
+    <div class="d-flex gap-1">
+      <% (1..5).each do |i| %>
+        <button type="button"
+                class="confidence-dot <%= 'filled' if assumption.confidence_user && i <= assumption.confidence_user %>"
+                data-action="click->confidence-rating#rate mouseenter->confidence-rating#preview mouseleave->confidence-rating#resetPreview"
+                data-value="<%= i %>"
+                aria-label="Rate <%= i %> out of 5">
+        </button>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>

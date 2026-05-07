@@ -1,0 +1,8 @@
+<% gap = assumption.confidence_gap %>
+<% if gap %>
+  <span class="<%= gap > 0 ? 'confidence-gap-positive' : 'text-muted' %>">
+    <%= gap > 0 ? "+#{gap}" : gap.to_s %>
+  </span>
+<% else %>
+  <span class="text-muted">—</span>
+<% end %>
