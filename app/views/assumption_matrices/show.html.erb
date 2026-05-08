@@ -1,43 +1,70 @@
-<div class="d-flex justify-content-between align-items-start mb-4">
-  <div>
-    <h1 class="h3 mb-0"><%= @strategy_product.name %></h1>
-    <p class="text-muted small mb-0">
-      <%= link_to "← All products", strategy_products_path, class: "text-muted" %>
-      &nbsp;&middot;&nbsp;
-      <%= link_to "Current view", strategy_product_path(@strategy_product), class: "text-muted" %>
-    </p>
-  </div>
-  <div class="d-flex gap-2">
-    <%= button_to "Regenerate",
-          strategy_product_assumption_matrices_path(@strategy_product),
-          method: :post,
-          class: "btn btn-outline-secondary btn-sm" %>
-    <button class="btn btn-outline-secondary btn-sm"
-            type="button"
-            data-bs-toggle="collapse"
-            data-bs-target="#raw-response">
-      Show raw response
-    </button>
-  </div>
-</div>
+<div data-controller="download-markdown"
+     data-download-markdown-product-value="<%= @strategy_product.name %>"
+     data-download-markdown-generated-value="<%= @matrix.generated_at&.strftime('%Y-%m-%d') || 'unknown' %>">
 
-<p class="text-muted small mb-1">
-  <strong>AI-generated.</strong> Re-rate Your Confidence on each row. Disagreement is the data.
-</p>
-<p class="text-muted small mb-3">
-  Generated <%= @matrix.generated_at ? time_ago_in_words(@matrix.generated_at) + " ago" : "at unknown time" %>
-</p>
-
-<% if @matrix.status == "failed" %>
-  <%= render "matrix_parse_error", strategy_product: @strategy_product, matrix: @matrix %>
-<% elsif @matrix.status == "completed" %>
-  <%= render "matrix_table", assumptions: @matrix.assumptions.order(:position) %>
-<% else %>
-  <p class="text-muted fst-italic">This matrix is still generating&hellip;</p>
-<% end %>
-
-<div class="collapse mt-3" id="raw-response">
-  <div class="card card-body">
-    <pre class="small mb-0 text-muted"><%= @matrix.gemini_raw %></pre>
+  <div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+      <h1 class="h3 mb-0"><%= @strategy_product.name %></h1>
+      <p class="text-muted small mb-0">
+        <%= link_to "← All products", strategy_products_path, class: "text-muted" %>
+        &nbsp;&middot;&nbsp;
+        <%= link_to "Current view", strategy_product_path(@strategy_product), class: "text-muted" %>
+      </p>
+    </div>
+    <div class="d-flex gap-2"
+         data-controller="generating"
+         data-action="turbo:submit-start->generating#start turbo:submit-end->generating#stop">
+      <div data-generating-target="form" class="d-flex gap-2">
+        <%= button_to "Regenerate",
+              strategy_product_assumption_matrices_path(@strategy_product),
+              method: :post,
+              class: "btn btn-outline-secondary btn-sm" %>
+        <% if @matrix.status == "completed" %>
+          <button class="btn btn-outline-secondary btn-sm"
+                  type="button"
+                  data-action="click->download-markdown#download">
+            Download .md
+          </button>
+        <% end %>
+        <button class="btn btn-outline-secondary btn-sm"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#raw-response">
+          Show raw response
+        </button>
+      </div>
+      <div data-generating-target="overlay" class="d-none">
+        <div class="d-flex align-items-center gap-2">
+          <div class="spinner-border spinner-border-sm text-secondary" role="status">
+            <span class="visually-hidden">Generating…</span>
+          </div>
+          <span class="text-muted small">Generating&hellip;</span>
+          <%= link_to "Cancel", strategy_product_path(@strategy_product),
+                class: "btn btn-sm btn-outline-secondary" %>
+        </div>
+      </div>
+    </div>
   </div>
+
+  <p class="text-muted small mb-1">
+    <strong>AI-generated.</strong> Re-rate Your Confidence on each row. Disagreement is the data.
+  </p>
+  <p class="text-muted small mb-3">
+    Generated <%= @matrix.generated_at ? time_ago_in_words(@matrix.generated_at) + " ago" : "at unknown time" %>
+  </p>
+
+  <% if @matrix.status == "failed" %>
+    <%= render "matrix_parse_error", strategy_product: @strategy_product, matrix: @matrix %>
+  <% elsif @matrix.status == "completed" %>
+    <%= render "matrix_table", assumptions: @matrix.assumptions.order(:position) %>
+  <% else %>
+    <p class="text-muted fst-italic">This matrix is still generating&hellip;</p>
+  <% end %>
+
+  <div class="collapse mt-3" id="raw-response">
+    <div class="card card-body">
+      <pre class="small mb-0 text-muted"><%= @matrix.gemini_raw %></pre>
+    </div>
+  </div>
+
 </div>

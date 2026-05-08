@@ -24,9 +24,15 @@
       </thead>
       <tbody>
         <% assumptions.each do |assumption| %>
-          <tr data-position="<%= assumption.position %>"
+          <tr data-download-markdown-target="row"
+              data-position="<%= assumption.position %>"
               data-risk="<%= assumption.risk %>"
-              data-gap="<%= assumption.confidence_gap&.abs || 0 %>">
+              data-gap="<%= assumption.confidence_gap&.abs || 0 %>"
+              data-statement="<%= assumption.statement %>"
+              data-confidence-ai="<%= assumption.confidence_ai %>"
+              data-confidence-user="<%= assumption.confidence_user || 0 %>"
+              data-category="<%= assumption.category %>"
+              data-experiment="<%= assumption.experiment %>">
 
             <td><%= assumption.statement %></td>
 

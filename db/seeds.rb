@@ -23,11 +23,11 @@ puts "Seeded: health_ping AI template"
 
 # AdaptableProduct assumptions template
 AiTemplate.find_or_create_by!(name: "adaptableproduct_assumptions_v1") do |t|
-  t.description = "Surfaces 8 to 12 ranked, falsifiable assumptions a product strategy depends on, paired with risk, category, and a cheap-first experiment."
-  t.model = "gemini-2.5-flash"
-  t.max_output_tokens = 2500
-  t.temperature = 0.4
-  t.system_prompt = <<~PROMPT.strip
+  t.description       = "Surfaces 8 to 12 ranked, falsifiable assumptions a product strategy depends on, paired with risk, category, and a cheap-first experiment."
+  t.model             = "gemini-2.5-flash"
+  t.max_output_tokens = 8192
+  t.temperature       = 0.4
+  t.system_prompt     = <<~PROMPT.strip
     You are a senior product strategist working with the user on the
     Assumption Challenge step of the 9-Step Adaptable Product Framework.
     Your job is to read the user's product strategy and return the
@@ -102,23 +102,65 @@ end
 
 puts "Seeded: adaptableproduct_assumptions_v1 AI template"
 
-# ── Domain seed ────────────────────────────────────────────────────────────────
-demo_user = User.find_by!(email: "demo@example.com")
+# ── Client products for demo@example.com ──────────────────────────────────────
+demo = User.find_by!(email: "demo@example.com")
 
-StrategyProduct.find_or_create_by!(user: demo_user, name: "FieldNote") do |sp|
-  sp.target_customer = "Solo therapists in private practice billing insurance directly"
-  sp.strategy        = "FieldNote replaces the four-tab workflow most solo therapists use (Google Calendar, a notes doc, a billing spreadsheet, and a portal for insurance claims) with one weekly view that captures session notes and auto-generates the CPT-coded claim. We charge $39/month, beat SimplePractice on price, and win on the weekly review surface that competitors do not have."
-  sp.primary_goal    = "Get to 200 paying solo therapists in 12 months at under $80 CAC."
+clients = [
+  {
+    name:            "FieldNote",
+    target_customer: "Solo therapists in private practice billing insurance directly",
+    strategy:        "FieldNote replaces the four-tab workflow most solo therapists use (Google Calendar, a notes doc, a billing spreadsheet, and a portal for insurance claims) with one weekly view that captures session notes and auto-generates the CPT-coded claim. We charge $39/month, beat SimplePractice on price, and win on the weekly review surface that competitors do not have.",
+    primary_goal:    "Get to 200 paying solo therapists in 12 months at under $80 CAC."
+  },
+  {
+    name:            "ClearRoute",
+    target_customer: "Operations managers at regional freight brokerages (20–200 employees)",
+    strategy:        "ClearRoute gives freight brokers a real-time lane intelligence dashboard that surfaces which lanes are margin-positive today based on current spot rates and their historical cost data. We sell at $299/month as an add-on to whatever TMS they already run. We win against spreadsheets and gut instinct, not against enterprise TMS providers.",
+    primary_goal:    "Sign 50 paying brokerages in 6 months at under $400 CAC through direct outbound."
+  },
+  {
+    name:            "PinPoint",
+    target_customer: "Project managers at residential general contractors running 5–25 active jobsites",
+    strategy:        "PinPoint replaces the daily phone-tag loop between GCs and subcontractors with a jobsite feed: subs post a photo + status update each morning, the GC sees every site in one view, and schedule slippage is flagged automatically before it compounds. We charge $199/month per GC account with unlimited sub logins. We win by eliminating the coordination overhead that causes most residential projects to run 3–4 weeks late.",
+    primary_goal:    "Reach $50K MRR within 18 months by closing 250 GC accounts through referral and trade-show outbound."
+  },
+  {
+    name:            "Credenza",
+    target_customer: "Managing partners at boutique law firms (3–15 attorneys) handling transactional work",
+    strategy:        "Credenza automates the matter-opening checklist — conflict check, engagement letter generation, trust account setup, and client portal provisioning — collapsing a 90-minute admin process to under 5 minutes. We price at $149/attorney/month and position against the compliance risk of skipping steps, not against practice management software incumbents like Clio.",
+    primary_goal:    "Close 100 law firm accounts in 12 months, targeting firms that have had at least one bar complaint related to intake process failures."
+  },
+  {
+    name:            "PulseBoard",
+    target_customer: "Multi-unit restaurant operators managing 3–12 quick-service locations",
+    strategy:        "PulseBoard consolidates the four dashboards a multi-unit operator checks each morning — POS sales, labor scheduling, food cost variance, and Google review score — into a single exception-based digest delivered by 7 AM. We charge $99/location/month and win by cutting the operator's morning review from 45 minutes to 8 minutes. We do not compete with Toast or Square; we sit on top of them.",
+    primary_goal:    "Reach 500 paying locations within 24 months by partnering with regional restaurant associations and franchise development consultants."
+  },
+  {
+    name:            "GrantPath",
+    target_customer: "Development directors at community nonprofits with $500K–$5M annual budgets",
+    strategy:        "GrantPath turns a nonprofit's program descriptions and outcome data into a reusable content library, then uses that library to draft grant applications matched to open RFPs. The development director reviews and submits; GrantPath handles research and first-draft writing. We charge $299/month and position against the $3,000–$8,000 per-grant cost of outsourcing to freelance grant writers.",
+    primary_goal:    "Reach 300 paying nonprofits in 18 months by converting inbound leads from foundation program officers who refer their grantees."
+  },
+  {
+    name:            "ShiftSync",
+    target_customer: "Owners of independent home care agencies (10–80 caregivers) in states with EVV mandates",
+    strategy:        "ShiftSync combines electronic visit verification (required by law), caregiver scheduling, and Medicaid billing into a single mobile-first workflow. Caregivers clock in via GPS-tagged photo; the visit record flows automatically to the billing queue. We charge $12/active caregiver/month and win against legacy EVV platforms that require desktop access and charge per-claim billing fees on top of the subscription.",
+    primary_goal:    "Reach 150 agency accounts covering 5,000 active caregivers within 18 months, targeting states where EVV compliance deadlines fall in the next 12 months."
+  },
+  {
+    name:            "Versa",
+    target_customer: "HR managers at professional services firms (50–300 employees) with high contractor mix",
+    strategy:        "Versa automates the compliance paperwork layer for contract workforce: onboarding packets, I-9 verification, classification questionnaires, and contractor invoice reconciliation. It plugs into the HR system of record via API and handles the contractor lifecycle that Workday and BambooHR deliberately leave out. We sell at $8/contractor/month with a $500/month floor.",
+    primary_goal:    "Sign 80 accounts in 12 months by targeting firms that have received IRS notices about worker misclassification in the past 24 months."
+  }
+]
+
+clients.each do |attrs|
+  StrategyProduct.find_or_create_by!(user: demo, name: attrs[:name]) do |sp|
+    sp.target_customer = attrs[:target_customer]
+    sp.strategy        = attrs[:strategy]
+    sp.primary_goal    = attrs[:primary_goal]
+  end
+  puts "Seeded: #{attrs[:name]}"
 end
-
-puts "Seeded: FieldNote strategy product"
-
-# ── Optional second seed ───────────────────────────────────────────────────────
-# Uncomment to see how a different domain produces a different matrix.
-# Re-comment and run rails db:seed again to remove it.
-#
-# StrategyProduct.find_or_create_by!(user: demo_user, name: "ClearRoute") do |sp|
-#   sp.target_customer = "Operations managers at regional freight brokerages (20-200 employees)"
-#   sp.strategy        = "ClearRoute gives freight brokers a real-time lane intelligence dashboard that surfaces which lanes are margin-positive today based on current spot rates and their historical cost data. We sell at $299/month as an add-on to whatever TMS they already run. We win against spreadsheets and gut instinct, not against enterprise TMS providers."
-#   sp.primary_goal    = "Sign 50 paying brokerages in 6 months at under $400 CAC through direct outbound."
-# end

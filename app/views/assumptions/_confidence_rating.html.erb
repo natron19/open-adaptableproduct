@@ -1,5 +1,5 @@
 <%= turbo_frame_tag "assumption_#{assumption.id}_confidence" do %>
-  <%= form_with url: assumption_path(assumption), method: :patch,
+  <%= form_with url: assumption_path(assumption), method: :patch, scope: :assumption,
         data: { controller: "confidence-rating" } do |f| %>
     <%= f.hidden_field :confidence_user,
           value: assumption.confidence_user || 0,
